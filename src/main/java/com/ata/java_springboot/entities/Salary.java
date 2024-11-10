@@ -13,40 +13,51 @@ public class Salary {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @JsonProperty("Timestamp")
-    private String timestamp;
-
-    @JsonProperty("Employer")
-    private String employer;
-
-    @JsonProperty("Location")
-    private String location;
-
-    @JsonProperty("Job Title")
-    private String jobTitle;
-
-    @JsonProperty("Years at Employer")
-    private String yearsAtEmployer;
-
-    @JsonProperty("Years of Experience")
-    private String yearsOfExperience;
-
-    @JsonProperty("Salary")
-    private String salary;
-
-    @JsonProperty("Signing Bonus")
-    private String signingBonus;
+    @JsonProperty("Additional Comments")
+    @Column(name = "ADDITIONAL_COMMENTS", columnDefinition = "TEXT", length = 1000)
+    private String additionalComments;
 
     @JsonProperty("Annual Bonus")
+    @Column(name = "ANNUAL_BONUS")
     private String annualBonus;
 
     @JsonProperty("Annual Stock Value/Bonus")
+    @Column(name = "ANNUAL_STOCK_VALUE_BONUS")
     private String annualStockValueBonus;
 
+    @JsonProperty("Employer")
+    @Column(name = "EMPLOYER")
+    private String employer;
+
     @JsonProperty("Gender")
+    @Column(name = "GENDER")
     private String gender;
 
-    @Column(columnDefinition="TEXT", length = 1000)
-    @JsonProperty("Additional Comments")
-    private String additionalComments;
+    @JsonProperty("Job Title")
+    @Column(name = "JOB_TITLE")
+    private String jobTitle;
+
+    @JsonProperty("Location")
+    @Column(name = "LOCATION")
+    private String location;
+
+    @JsonProperty("Salary")
+    @Column(name = "SALARY")
+    private String salary;
+
+    @JsonProperty("Signing Bonus")
+    @Column(name = "SIGNING_BONUS")
+    private String signingBonus;
+
+    @JsonProperty("Timestamp")
+    @Column(name = "TIMESTAMP")
+    private String timestamp;
+
+    @JsonProperty("Years at Employer")
+    @Column(name = "YEARS_AT_EMPLOYER")
+    private String yearsAtEmployer;
+
+    @JsonProperty("Years of Experience")
+    @Column(name = "YEARS_OF_EXPERIENCE")
+    private String yearsOfExperience;
 }
