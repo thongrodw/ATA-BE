@@ -3,6 +3,7 @@ package com.ata.java_springboot.services;
 import com.ata.java_springboot.entities.Salary;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.persistence.Column;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
@@ -11,9 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.StringJoiner;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -32,13 +32,13 @@ public class SalaryService {
         return mapObjectsToJson((selectedFields == null || selectedFields.isEmpty()) ? getAllFieldNames() : selectedFields, resultList);
     }
 
-    private String buildQuery(MultiValueMap<String, String> filters, List<String> selectedFields,
+    private String buildQuery(MultiValueMap<String, String> filters, List<String> selectedFilterFields,
                               List<String> sortFields, String sortDirection) {
         StringJoiner selectFields = new StringJoiner(", ");
-        if (selectedFields == null || selectedFields.isEmpty()) {
+        if (selectedFilterFields == null || selectedFilterFields.isEmpty()) {
             selectFields.add("*");
         } else {
-            selectedFields.forEach(selectFields::add);
+            mapFieldsToColumns(selectedFilterFields).forEach(selectFields::add);
         }
 
         StringBuilder queryBuilder = new StringBuilder("SELECT ")
@@ -131,5 +131,25 @@ public class SalaryService {
         } catch (NumberFormatException e) {
             return null;
         }
+    }
+
+    private List<String> mapFieldsToColumns(List<String> fields) {
+        Map<String, String> fieldToColumnMap = getFieldToColumnMap(Salary.class);
+        return fields.stream()
+                .map(field -> fieldToColumnMap.getOrDefault(field, field))
+                .collect(Collectors.toList());
+    }
+
+    private Map<String, String> getFieldToColumnMap(Class<?> clazz) {
+        Map<String, String> fieldToColumnMap = new HashMap<>();
+        for (Field field : clazz.getDeclaredFields()) {
+            Column columnAnnotation = field.getAnnotation(Column.class);
+            if (columnAnnotation != null) {
+                fieldToColumnMap.put(field.getName(), columnAnnotation.name());
+            } else {
+                fieldToColumnMap.put(field.getName(), field.getName().toUpperCase());
+            }
+        }
+        return fieldToColumnMap;
     }
 }
