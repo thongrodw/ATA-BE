@@ -2,12 +2,14 @@ package com.ata.java_springboot.services;
 
 import com.ata.java_springboot.entities.Salary;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
 
@@ -15,6 +17,7 @@ import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class SalaryService {
@@ -24,11 +27,14 @@ public class SalaryService {
 
     private final ObjectMapper objectMapper;
 
-    public List<ObjectNode> getSalaryByCriteria(MultiValueMap<String, String> filters, List<String> selectedFields,
+    public ArrayNode getSalaryByCriteria(MultiValueMap<String, String> filters, List<String> selectedFields,
                                                 List<String> sortFields, String sortDirection, int page, int size) {
         String sqlQuery = buildQuery(filters, selectedFields, sortFields, sortDirection);
         Query query = createQueryWithParameters(sqlQuery, filters, page, size);
         List<Object[]> resultList = query.getResultList();
+        if(resultList.isEmpty()) {
+            return objectMapper.createArrayNode();
+        }
         return mapObjectsToJson((selectedFields == null || selectedFields.isEmpty()) ? getAllFieldNames() : selectedFields, resultList);
     }
 
@@ -101,16 +107,24 @@ public class SalaryService {
         query.setParameter("offset", page * size);
     }
 
-    private List<ObjectNode> mapObjectsToJson(List<String> fields, List<Object[]> objects) {
-        List<ObjectNode> jsonObjects = new ArrayList<>();
-        for (Object[] row : objects) {
-            ObjectNode jsonNode = objectMapper.createObjectNode();
-            for (int i = 0; i < fields.size(); i++) {
-                jsonNode.putPOJO(fields.get(i), row[i]);
+    private ArrayNode mapObjectsToJson(List<String> fields, List<?> sqlResult) {
+        ArrayNode arrayNode = objectMapper.createArrayNode();
+        for (Object row : sqlResult) {
+            try {
+                ObjectNode objectNode = objectMapper.createObjectNode();
+                if (row instanceof Object[] rowArray) {
+                    for (int i = 0; i < fields.size(); i++) {
+                        objectNode.putPOJO(fields.get(i), rowArray[i]);
+                    }
+                } else {
+                    objectNode.putPOJO(fields.get(0), row);
+                }
+                arrayNode.add(objectNode);
+            } catch (Exception e) {
+                log.error("Error mapping row to JSON: {}", e.getMessage());
             }
-            jsonObjects.add(jsonNode);
         }
-        return jsonObjects;
+        return arrayNode;
     }
 
     private List<String> getAllFieldNames() {
